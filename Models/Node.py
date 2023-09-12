@@ -3,7 +3,7 @@ import os
 
 class Node:
     def __init__(self, node_type, node_name="NA", node_ip="NA"):
-        if node_type != "master" and node_type != "worker":
+        if node_type.lower() != "master" and node_type.lower() != "worker":
             raise Exception("Node type must be master or worker")
 
         self.node_type = node_type
