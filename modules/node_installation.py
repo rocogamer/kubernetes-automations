@@ -34,13 +34,17 @@ class NodeInstallation:
         self.node.execute_command(
             "echo fs.inotify.max_user_instances=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p")
 
+        self.node.execute_command("sysctl -w net.netfilter.nf_conntrack_max=1000000")
+        self.node.execute_command("echo 'net.netfilter.nf_conntrack_max=1000000' |tee -a /etc/sysctl.conf")
+
+
         self.node.execute_command("swapoff -a")
         self.node.execute_command("sed -i '/ swap / s/^/#/' /etc/fstab")
 
         # Ejecutaremos una serie de comandos para instalar el nodo que serian los siguientes:
         self.node.execute_command("apt update")
         self.node.execute_command("apt install -y apt-transport-https ca-certificates curl software-properties-common "
-                                  "curl git vim")
+                                  "curl git vim ipvsadm iptables")
         self.node.execute_command("curl -fsSL https://dl.k8s.io/apt/doc/apt-key.gpg | gpg --dearmor -o "
                                   "/etc/apt/keyrings/kubernetes-archive-keyring.gpg")
         self.node.execute_command('echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] '
