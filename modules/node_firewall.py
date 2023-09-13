@@ -11,15 +11,15 @@ class NodeFirewall:
         self.config = config
 
     def install_firewall(self):
-        if self.config["global"]["firewall"]:
-            self.node.excute_command("apt update")
-            if self.config["firewall"]["iptables"]:
+        if self.config.getboolean("global", "firewall"):
+            self.node.execute_command("apt update")
+            if self.config.getboolean("node_firewall", "iptables"):
                 self.node.execute_command("apt install -y iptables")
 
-            if self.config["firewall"]["firewalld"]:
+            if self.config.getboolean("node_firewall", "firewalld"):
                 self.node.execute_command("apt install -y firewalld")
 
-            if self.config["firewall"]["ufw"]:
+            if self.config.getboolean("node_firewall", "ufw"):
                 self.node.execute_command("apt install -y ufw")
 
             self.configure_firewall()
@@ -43,7 +43,7 @@ class NodeFirewall:
         if ports == []:
             return
 
-        if self.config["firewall"]["iptables"]:
+        if self.config.getboolean("node_firewall", "iptables"):
             if len(ports) > 1 and not ports[0].__contains__(":"):
                 ports = ",".join(ports)
                 self.node.execute_command(
@@ -54,10 +54,10 @@ class NodeFirewall:
                     f"iptables -A INPUT -p {proto} -m comment --dport {ports[0]}"
                     f" -j ACCEPT --comment '{comment}'")
 
-            if self.config["firewall"]["iptables_save"]:
+            if self.config.getboolean("node_firewall", "iptables_save"):
                 self.node.execute_command("iptables-save > /etc/iptables/rules.v4")
 
-            if self.config["firewall"]["firewall_script"] != "NA":
+            if self.config["node_firewall"]["firewall_script"] != "NA":
                 # Hacemos append de los comandos de iptables al script
                 file = open(self.config["firewall"]["firewall_script"], "a")
                 if len(ports) > 1 and not ports[0].__contains__(":"):
@@ -74,34 +74,34 @@ class NodeFirewall:
             print("iptables configuration disabled")
 
     def configure_firewalld(self, ports=[], proto="tcp"):
-        if self.config["firewall"]["firewalld"]:
+        if self.config.getboolean("node_firewall", "firewalld"):
             for i, port in enumerate(ports):
                 self.node.execute_command(
-                    f"firewall-cmd --permanent --add-port={port}/{proto} --zone={self.config['firewall']['firewalld_zone']} --permanent --add-port={port}/{proto}"
+                    f"firewall-cmd --permanent --add-port={port}/{proto} --zone={self.config['node_firewall']['firewalld_zone']} --permanent --add-port={port}/{proto}"
                 )
 
             self.node.execute_command("firewall-cmd --reload")
 
-            if self.config["firewall"]["firewall_script"] != "NA":
+            if self.config["node_firewall"]["firewall_script"] != "NA":
                 # Hacemos append de los comandos de firewalld al script
                 file = open(self.config["firewall"]["firewall_script"], "a")
                 for i, port in enumerate(ports):
                     file.write(
-                        f"firewall-cmd --permanent --add-port={port}/{proto} --zone={self.config['firewall']['firewalld_zone']} --permanent --add-port={port}/{proto}"
+                        f"firewall-cmd --permanent --add-port={port}/{proto} --zone={self.config['node_firewall']['firewalld_zone']} --permanent --add-port={port}/{proto}"
                     )
                 file.close()
         else:
             print("firewalld configuration disabled")
 
     def configure_ufw(self, ports=[], proto="tcp"):
-        if self.config["firewall"]["ufw"]:
+        if self.config.getboolean("node_firewall", "ufw"):
             for i, port in enumerate(ports):
                 self.node.execute_command(f"ufw allow {port}/{proto}")
             self.node.execute_command("ufw reload")
 
-            if self.config["firewall"]["firewall_script"] != "NA":
+            if self.config["node_firewall"]["firewall_script"] != "NA":
                 # Hacemos append de los comandos de ufw al script
-                file = open(self.config["firewall"]["firewall_script"], "a")
+                file = open(self.config["node_firewall"]["firewall_script"], "a")
                 for i, port in enumerate(ports):
                     file.write(f"ufw allow {port}/{proto}")
                 file.close()

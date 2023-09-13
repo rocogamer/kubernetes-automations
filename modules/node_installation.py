@@ -49,16 +49,15 @@ class NodeInstallation:
         self.node.execute_command("apt update")
         self.node.execute_command("apt install -y apt-transport-https ca-certificates curl software-properties-common "
                                   "curl git vim ipvsadm iptables")
-        self.node.execute_command("curl -fsSL https://dl.k8s.io/apt/doc/apt-key.gpg | gpg --dearmor -o "
-                                  "/etc/apt/keyrings/kubernetes-archive-keyring.gpg")
-        self.node.execute_command('echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] '
-                                  'https://apt.kubernetes.io/'
-                                  'kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list')
+        self.node.execute_command("curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | gpg --dearmor -o "
+                                  "/etc/apt/keyrings/kubernetes-apt-keyring.gpg")
+        self.node.execute_command('echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list')
         self.node.execute_command("apt update")
 
     def install_node(self):
         self.node.execute_command(f"apt install -y kubelet='{self.config['k8s']['version']}' kubeadm='{self.config['k8s']['version']}' kubectl='{self.config['k8s']['version']}'")
         self.node.execute_command("apt-mark hold kubelet kubeadm kubectl")
+        self.post_install_node()
 
     def post_install_node(self):
         self.node.execute_command("kubeadm config images pull")
