@@ -17,9 +17,9 @@ Caracteristiscas del programa:
   - [ ] Backups en remoto con tecnologia CIFS
   - [ ] Backups en remoto con tecnologia FTP
   - [ ] Backups en remoto con tecnologia RSYNC
-- [ ] Instalación de las redes, marcadas con check las compatibles actualmente:
-  - [ ] Calico
-  - [ ] Flannel
+- [X] Instalación de las redes, marcadas con check las compatibles actualmente:
+  - [X] Calico
+  - [X] Flannel
 - [ ] Instalación de componentes de storage, marcadas con check las compatibles actualmente:
   - [ ] Longhorn
   - [ ] Rook
