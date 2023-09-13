@@ -43,7 +43,7 @@ class NodeInstallation:
 
 
         self.node.execute_command("swapoff -a")
-        self.node.execute_command("sed -i '/ swap / s/^/#/' /etc/fstab")
+        self.node.execute_command("sed -i '/swap/ s/^/#/' /etc/fstab")
 
         # Ejecutaremos una serie de comandos para instalar el nodo que serian los siguientes:
         self.node.execute_command("apt update")
