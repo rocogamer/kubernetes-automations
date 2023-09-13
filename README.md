@@ -9,7 +9,7 @@ Caracteristiscas del programa:
 - [ ] Realizar instalacion usando el metodo kubeadm, con HA o sin HA.
   - [ ] Usando loadbalancer externo, creandolo con configuracion IPTables en nodo externo
   - [ ] Usando loadbalancer interno, usando KeepAlived
-- [ ] Instalación de Masters y workers.
+- [X] Instalación de Masters y workers.
 - [ ] Configuracion del sistema de backups
 - [ ] Instalación de las redes, marcadas con check las compatibles actualmente:
   - [ ] Calico

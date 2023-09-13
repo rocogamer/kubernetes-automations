@@ -1,13 +1,17 @@
 class NodeInstallation:
     # Definimos el constructor
-    def __init__(self, node):
+    def __init__(self, node, config):
         if type(node).__name__ != "Node":
             raise Exception("Node must be a Node object")
 
+        if type(config).__name__ != "ConfigParser" and "k8s" not in config.sections():
+            raise Exception("Config must be a ConfigParser object and the section node_firewall must be in the config")
+
         self.node = node
+        self.config = config
 
     # Definimos el método para instalar el nodo
-    def install_node(self):
+    def pre_install_node(self):
         self.node.execute_command("modprobe overlay")
         self.node.execute_command("modprobe br_netfilter")
         file = open("/etc/modules-load.d/containerd.conf", "w")
@@ -39,15 +43,36 @@ class NodeInstallation:
 
 
         self.node.execute_command("swapoff -a")
-        self.node.execute_command("sed -i '/ swap / s/^/#/' /etc/fstab")
+        self.node.execute_command("sed -i '/swap/ s/^/#/' /etc/fstab")
 
         # Ejecutaremos una serie de comandos para instalar el nodo que serian los siguientes:
         self.node.execute_command("apt update")
         self.node.execute_command("apt install -y apt-transport-https ca-certificates curl software-properties-common "
                                   "curl git vim ipvsadm iptables")
-        self.node.execute_command("curl -fsSL https://dl.k8s.io/apt/doc/apt-key.gpg | gpg --dearmor -o "
-                                  "/etc/apt/keyrings/kubernetes-archive-keyring.gpg")
-        self.node.execute_command('echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] '
-                                  'https://apt.kubernetes.io/'
-                                  'kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list')
+        self.node.execute_command("curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | gpg --dearmor -o "
+                                  "/etc/apt/keyrings/kubernetes-apt-keyring.gpg")
+        self.node.execute_command('echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list')
         self.node.execute_command("apt update")
+
+    def install_node(self):
+        self.node.execute_command(f"apt install -y kubelet='{self.config['k8s']['version']}' kubeadm='{self.config['k8s']['version']}' kubectl='{self.config['k8s']['version']}'")
+        self.node.execute_command("apt-mark hold kubelet kubeadm kubectl")
+        self.post_install_node()
+
+    def post_install_node(self):
+        self.node.execute_command("kubeadm config images pull")
+        kubeadm_init = ""
+        if self.node.node_type == "master":
+            if self.config['k8s_components']['network'] == "calico":
+                kubeadm_init = "kubeadm init --pod-network-cidr=10.244.0.0/16"
+            elif self.config['k8s_components']['network'] == "flannel":
+                kubeadm_init = "kubeadm init --pod-network-cidr=192.168.0.0/16"
+            else:
+                raise Exception("Network not supported")
+        else:
+            kubeadm_init = f"kubeadm join {self.config['k8s']['master_ip']}:{self.config['k8s']['master_port']} --token {self.config['k8s']['token']} --discovery-token-ca-cert-hash sha256:{self.config['k8s']['ca_cert_hash']}"
+
+        self.node.execute_command(kubeadm_init)
+
+
+
