@@ -12,15 +12,15 @@ class NodeFirewall:
 
     def install_firewall(self):
         if self.config.getboolean("global", "firewall"):
-            self.node.execute_command("apt update")
+            self.node.execute_command("DEBIAN_FRONTEND=noninteractive apt update")
             if self.config.getboolean("node_firewall", "iptables"):
-                self.node.execute_command("apt install -y iptables")
+                self.node.execute_command("DEBIAN_FRONTEND=noninteractive apt install -y iptables")
 
             if self.config.getboolean("node_firewall", "firewalld"):
-                self.node.execute_command("apt install -y firewalld")
+                self.node.execute_command("DEBIAN_FRONTEND=noninteractive apt install -y firewalld")
 
             if self.config.getboolean("node_firewall", "ufw"):
-                self.node.execute_command("apt install -y ufw")
+                self.node.execute_command("DEBIAN_FRONTEND=noninteractive apt install -y ufw")
 
             self.configure_firewall()
         else:

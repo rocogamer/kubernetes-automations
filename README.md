@@ -10,7 +10,13 @@ Caracteristiscas del programa:
   - [ ] Usando loadbalancer externo, creandolo con configuracion IPTables en nodo externo
   - [ ] Usando loadbalancer interno, usando KeepAlived
 - [X] Instalación de Masters y workers.
-- [ ] Configuracion del sistema de backups
+- [X] Configuracion del sistema de backups
+  - [X] Backups local
+  - [ ] Backups en remoto con tecnologia S3
+  - [ ] Backups en remoto con tecnologia NFS
+  - [ ] Backups en remoto con tecnologia CIFS
+  - [ ] Backups en remoto con tecnologia FTP
+  - [ ] Backups en remoto con tecnologia RSYNC
 - [ ] Instalación de las redes, marcadas con check las compatibles actualmente:
   - [ ] Calico
   - [ ] Flannel

@@ -14,7 +14,7 @@ def main():
 
     config = configparser.ConfigParser()
     config.read('config.ini')
-    master_node = node.Node(config['k8s']['node_type'])
+    master_node = node.Node(config)
 
     # Hacemos la pre instalacion del nodo
     master_install = node_installation.NodeInstallation(master_node, config)
