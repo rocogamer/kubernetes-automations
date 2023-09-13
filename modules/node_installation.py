@@ -1,3 +1,6 @@
+import time
+
+
 class NodeInstallation:
     # Definimos el constructor
     def __init__(self, node, config):
@@ -77,6 +80,9 @@ class NodeInstallation:
 
         self.node.execute_command(kubeadm_init)
 
+        print("Esperamos un minuto antes de continuar")
+        time.sleep(30)
+
         if self.node.node_type == "master":
             self.node.execute_command("mkdir -p $HOME/.kube")
             self.node.execute_command("cp -i /etc/kubernetes/admin.conf $HOME/.kube/config")
@@ -84,6 +90,7 @@ class NodeInstallation:
 
             if self.config.getboolean("k8s", "master_etcd_backup"):
                 self.node.execute_command("mkdir -p /opt/backup")
+                self.node.execute_command("mkdir -p /etc/scripts/Seguridad")
                 self.node.execute_command("DEBIAN_FRONTEND=noninteractive apt update")
                 self.node.execute_command("DEBIAN_FRONTEND=noninteractive apt install -y etcd-client")
                 # Creamoe el fichero de script de backup /etc/scripts/Seguridad/backup.sh
