@@ -2,9 +2,10 @@ Actualmente este programa esta pensado para funcionamiento en distribuciones deb
 
 Caracteristiscas del programa:
 - [ ] Instalación de los componentes via remota usando SSH
-- [ ] Configurar Firewall:
-  - [ ] IPTables (Indicando ruta del script.sh, ademas se aplicara automaticamente durante la ejecucción)
-  - [ ] Firewalld
+- [X] Configurar Firewall:
+  - [X] IPTables (Indicando ruta del script.sh, ademas se aplicara automaticamente durante la ejecucción)
+  - [X] Firewalld
+  - [X] UFW
 - [ ] Realizar instalacion usando el metodo kubeadm, con HA o sin HA.
   - [ ] Usando loadbalancer externo, creandolo con configuracion IPTables en nodo externo
   - [ ] Usando loadbalancer interno, usando KeepAlived
