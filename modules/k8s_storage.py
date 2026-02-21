@@ -1,5 +1,7 @@
 import logging
+import configparser
 
+from models.node import Node
 from modules.node_firewall import NodeFirewall
 
 logger = logging.getLogger(__name__)
@@ -7,9 +9,9 @@ logger = logging.getLogger(__name__)
 
 class K8sStorage:
     def __init__(self, node, config):
-        if type(node).__name__ != "Node":
+        if not isinstance(node, Node):
             raise TypeError("node must be a Node object")
-        if type(config).__name__ != "ConfigParser" or "k8s_components_storage" not in config.sections():
+        if not isinstance(config, configparser.ConfigParser) or "k8s_components_storage" not in config.sections():
             raise ValueError("config must be a ConfigParser object with a 'k8s_components_storage' section")
 
         self.node = node
@@ -51,8 +53,9 @@ class K8sStorage:
             firewall.configure_ufw(["9500", "9501", "9502", "9503", "9504"], "tcp")
 
         # Install Longhorn via kubectl
+        longhorn_version = self.config["k8s_components_storage"].get("longhorn_version", "v1.5.1")
         self.node.execute_command(
-            "kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.5.1/deploy/longhorn.yaml"
+            f"kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/{longhorn_version}/deploy/longhorn.yaml"
         )
         logger.info("Longhorn installation completed")
 
@@ -60,8 +63,9 @@ class K8sStorage:
         logger.info("Installing Rook-Ceph storage")
 
         # Clone Rook repository and apply manifests
+        rook_version = self.config["k8s_components_storage"].get("rook_version", "v1.12.5")
         self.node.execute_command(
-            "git clone --single-branch --branch v1.12.5 https://github.com/rook/rook.git /tmp/rook"
+            f"git clone --single-branch --branch {rook_version} https://github.com/rook/rook.git /tmp/rook"
         )
         self.node.execute_command("kubectl create -f /tmp/rook/deploy/examples/crds.yaml")
         self.node.execute_command("kubectl create -f /tmp/rook/deploy/examples/common.yaml")

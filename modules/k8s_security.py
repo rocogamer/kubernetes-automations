@@ -1,13 +1,16 @@
 import logging
+import configparser
+
+from models.node import Node
 
 logger = logging.getLogger(__name__)
 
 
 class K8sSecurity:
     def __init__(self, node, config):
-        if type(node).__name__ != "Node":
+        if not isinstance(node, Node):
             raise TypeError("node must be a Node object")
-        if type(config).__name__ != "ConfigParser" or "k8s_components_security" not in config.sections():
+        if not isinstance(config, configparser.ConfigParser) or "k8s_components_security" not in config.sections():
             raise ValueError(
                 "config must be a ConfigParser object with a 'k8s_components_security' section"
             )
@@ -30,13 +33,15 @@ class K8sSecurity:
     def _install_falco(self):
         logger.info("Installing Falco runtime security")
 
+        falco_version = self.config["k8s_components_security"].get("falco_version", "0.36.2")
+
         # Create namespace
         self.node.execute_command(
             "kubectl create namespace falco --dry-run=client -o yaml | kubectl apply -f -"
         )
 
         # Install Falco using official manifests
-        falco_manifest = """apiVersion: v1
+        falco_manifest = f"""apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: falco
@@ -93,7 +98,7 @@ spec:
           key: node-role.kubernetes.io/master
       containers:
         - name: falco
-          image: falcosecurity/falco-no-driver:0.36.2
+          image: falcosecurity/falco-no-driver:{falco_version}
           securityContext:
             privileged: true
           volumeMounts:

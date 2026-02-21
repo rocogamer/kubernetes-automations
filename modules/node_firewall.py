@@ -1,13 +1,16 @@
 import logging
+import configparser
+
+from models.node import Node
 
 logger = logging.getLogger(__name__)
 
 
 class NodeFirewall:
     def __init__(self, node, config):
-        if type(node).__name__ != "Node":
+        if not isinstance(node, Node):
             raise TypeError("node must be a Node object")
-        if type(config).__name__ != "ConfigParser" or "node_firewall" not in config.sections():
+        if not isinstance(config, configparser.ConfigParser) or "node_firewall" not in config.sections():
             raise ValueError("config must be a ConfigParser object with a 'node_firewall' section")
 
         self.node = node

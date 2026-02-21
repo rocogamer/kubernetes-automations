@@ -1,4 +1,5 @@
 import subprocess
+import configparser
 import logging
 
 logger = logging.getLogger(__name__)
@@ -8,15 +9,15 @@ class Node:
     def __init__(self, config=None, node_type="NA", node_name="NA", node_ip="NA"):
         if node_type != "NA" and node_type.lower() not in ("master", "worker"):
             raise ValueError("Node type must be 'master' or 'worker'")
-        if node_type == "NA" and (config is None or type(config).__name__ != "ConfigParser"):
+        if node_type == "NA" and (config is None or not isinstance(config, configparser.ConfigParser)):
             raise ValueError("Node type must be 'master' or 'worker', or config must be a ConfigParser object")
 
         self.node_name = (
-            subprocess.check_output("hostname", shell=True).decode().strip()
+            subprocess.check_output(["hostname"]).decode().strip()
             if node_name == "NA" else node_name
         )
         self.node_ip = (
-            subprocess.check_output("hostname -I", shell=True).decode().strip().split()[0]
+            subprocess.check_output(["hostname", "-I"]).decode().strip().split()[0]
             if node_ip == "NA" else node_ip
         )
 
@@ -32,7 +33,7 @@ class Node:
         logger.info(f"Executing: {command}")
         result = subprocess.run(command, shell=True, capture_output=True, text=True)
         if result.returncode != 0:
-            logger.warning(f"Command exited with code {result.returncode}: {result.stderr.strip()}")
+            logger.error(f"Command failed with code {result.returncode}: {result.stderr.strip()}")
         else:
             if result.stdout.strip():
                 logger.debug(result.stdout.strip())
@@ -42,5 +43,5 @@ class Node:
         logger.info(f"Executing (capture): {command}")
         result = subprocess.run(command, shell=True, capture_output=True, text=True)
         if result.returncode != 0:
-            logger.warning(f"Command exited with code {result.returncode}: {result.stderr.strip()}")
+            logger.error(f"Command failed with code {result.returncode}: {result.stderr.strip()}")
         return result.stdout.strip()

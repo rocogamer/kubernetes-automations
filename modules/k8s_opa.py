@@ -1,13 +1,16 @@
 import logging
+import configparser
+
+from models.node import Node
 
 logger = logging.getLogger(__name__)
 
 
 class K8sOPA:
     def __init__(self, node, config):
-        if type(node).__name__ != "Node":
+        if not isinstance(node, Node):
             raise TypeError("node must be a Node object")
-        if type(config).__name__ != "ConfigParser" or "k8s_components_opa" not in config.sections():
+        if not isinstance(config, configparser.ConfigParser) or "k8s_components_opa" not in config.sections():
             raise ValueError(
                 "config must be a ConfigParser object with a 'k8s_components_opa' section"
             )
@@ -30,10 +33,11 @@ class K8sOPA:
     def _install_gatekeeper(self):
         logger.info("Installing OPA Gatekeeper")
 
+        gatekeeper_version = self.config["k8s_components_opa"].get("gatekeeper_version", "v3.13.3")
         # Install Gatekeeper
         self.node.execute_command(
-            "kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/"
-            "v3.13.3/deploy/gatekeeper.yaml"
+            f"kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/"
+            f"{gatekeeper_version}/deploy/gatekeeper.yaml"
         )
 
         # Wait for Gatekeeper to be ready

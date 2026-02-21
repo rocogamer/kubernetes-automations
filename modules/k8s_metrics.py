@@ -1,13 +1,16 @@
 import logging
+import configparser
+
+from models.node import Node
 
 logger = logging.getLogger(__name__)
 
 
 class K8sMetrics:
     def __init__(self, node, config):
-        if type(node).__name__ != "Node":
+        if not isinstance(node, Node):
             raise TypeError("node must be a Node object")
-        if type(config).__name__ != "ConfigParser" or "k8s_components_metricas" not in config.sections():
+        if not isinstance(config, configparser.ConfigParser) or "k8s_components_metricas" not in config.sections():
             raise ValueError(
                 "config must be a ConfigParser object with a 'k8s_components_metricas' section"
             )
@@ -24,7 +27,7 @@ class K8sMetrics:
             logger.info("Metrics components are only installed from master nodes")
             return
 
-        if self.config.getboolean("k8s_components_metricas", "Kube_metrics_server"):
+        if self.config.getboolean("k8s_components_metricas", "kube_metrics_server"):
             self._install_metrics_server()
 
     def _install_metrics_server(self):

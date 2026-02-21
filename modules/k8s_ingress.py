@@ -1,5 +1,7 @@
 import logging
+import configparser
 
+from models.node import Node
 from modules.node_firewall import NodeFirewall
 
 logger = logging.getLogger(__name__)
@@ -7,9 +9,9 @@ logger = logging.getLogger(__name__)
 
 class K8sIngress:
     def __init__(self, node, config):
-        if type(node).__name__ != "Node":
+        if not isinstance(node, Node):
             raise TypeError("node must be a Node object")
-        if type(config).__name__ != "ConfigParser" or "k8s_components_ingress" not in config.sections():
+        if not isinstance(config, configparser.ConfigParser) or "k8s_components_ingress" not in config.sections():
             raise ValueError("config must be a ConfigParser object with a 'k8s_components_ingress' section")
 
         self.node = node
@@ -53,10 +55,11 @@ class K8sIngress:
     def _install_nginx_ingress(self):
         logger.info("Installing NGINX Ingress Controller (community)")
 
+        nginx_version = self.config["k8s_components_ingress"].get("nginx_ingress_version", "v1.8.2")
         # Install using official NGINX Ingress Helm chart via manifests
         self.node.execute_command(
-            "kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/"
-            "controller-v1.8.2/deploy/static/provider/baremetal/deploy.yaml"
+            f"kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/"
+            f"controller-{nginx_version}/deploy/static/provider/baremetal/deploy.yaml"
         )
 
         # Patch service type if needed
@@ -70,9 +73,10 @@ class K8sIngress:
     def _install_nginx_ingress_kubernetes(self):
         logger.info("Installing NGINX Ingress Controller (Kubernetes official)")
 
+        nginx_version = self.config["k8s_components_ingress"].get("nginx_ingress_version", "v1.8.2")
         self.node.execute_command(
-            "kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/"
-            "controller-v1.8.2/deploy/static/provider/baremetal/deploy.yaml"
+            f"kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/"
+            f"controller-{nginx_version}/deploy/static/provider/baremetal/deploy.yaml"
         )
         logger.info("NGINX Ingress (Kubernetes) installed")
 
@@ -166,9 +170,10 @@ spec:
         self.node.execute_command(
             "kubectl create namespace haproxy-controller --dry-run=client -o yaml | kubectl apply -f -"
         )
+        haproxy_version = self.config["k8s_components_ingress"].get("haproxy_ingress_version", "v1.10")
         self.node.execute_command(
-            "kubectl apply -f https://raw.githubusercontent.com/haproxytech/kubernetes-ingress/"
-            "v1.10/deploy/haproxy-ingress.yaml"
+            f"kubectl apply -f https://raw.githubusercontent.com/haproxytech/kubernetes-ingress/"
+            f"{haproxy_version}/deploy/haproxy-ingress.yaml"
         )
 
         svc_type = self._get_service_type()

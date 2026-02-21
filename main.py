@@ -27,7 +27,27 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def validate_config(config):
+    """Validate that all required configuration sections and keys exist."""
+    required_sections = ["global", "node_firewall", "k8s", "k8s_etc_backup", "k8s_components"]
+    missing = [s for s in required_sections if s not in config.sections()]
+    if missing:
+        raise ValueError(f"Missing required config sections: {missing}")
+
+    # Validate worker node requirements
+    if config["k8s"].get("master_ip"):
+        required_worker_keys = ["master_ip", "master_port", "master_token", "master_cert"]
+        for key in required_worker_keys:
+            if not config["k8s"].get(key):
+                raise ValueError(f"Worker/secondary master config requires '{key}' in [k8s] section")
+
+
 def main():
+    # Check root privileges
+    if os.geteuid() != 0:
+        print("Error: This script must be run as root (use sudo)")
+        sys.exit(1)
+
     config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini")
 
     if not os.path.isfile(config_path):
@@ -36,6 +56,12 @@ def main():
 
     config = configparser.ConfigParser()
     config.read(config_path)
+
+    try:
+        validate_config(config)
+    except ValueError as e:
+        logger.error(f"Configuration validation failed: {e}")
+        sys.exit(1)
 
     logger.info("=== Kubernetes Automation Starting ===")
 

@@ -1,5 +1,7 @@
 import logging
+import configparser
 
+from models.node import Node
 from modules.node_firewall import NodeFirewall
 
 logger = logging.getLogger(__name__)
@@ -7,9 +9,9 @@ logger = logging.getLogger(__name__)
 
 class NodeHA:
     def __init__(self, node, config):
-        if type(node).__name__ != "Node":
+        if not isinstance(node, Node):
             raise TypeError("node must be a Node object")
-        if type(config).__name__ != "ConfigParser" or "k8s" not in config.sections():
+        if not isinstance(config, configparser.ConfigParser) or "k8s" not in config.sections():
             raise ValueError("config must be a ConfigParser object with a 'k8s' section")
 
         self.node = node
@@ -51,6 +53,13 @@ class NodeHA:
         interface = self.node.execute_command_output(
             "ip route | grep default | awk '{print $5}' | head -1"
         )
+        if not interface:
+            raise RuntimeError(
+                "Could not detect default network interface. "
+                "Ensure the node has a default route configured."
+            )
+
+        ha_auth_pass = self.config["k8s"].get("ha_auth_pass", "k8s_ha_pass")
 
         keepalived_conf = f"""global_defs {{
     router_id K8S_MASTER
@@ -71,7 +80,7 @@ vrrp_instance VI_1 {{
     priority {priority}
     authentication {{
         auth_type PASS
-        auth_pass k8s_ha_pass
+        auth_pass {ha_auth_pass}
     }}
     virtual_ipaddress {{
         {virtual_ip}

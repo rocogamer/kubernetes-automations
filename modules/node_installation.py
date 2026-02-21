@@ -1,14 +1,17 @@
 import time
 import logging
+import configparser
+
+from models.node import Node
 
 logger = logging.getLogger(__name__)
 
 
 class NodeInstallation:
     def __init__(self, node, config):
-        if type(node).__name__ != "Node":
+        if not isinstance(node, Node):
             raise TypeError("node must be a Node object")
-        if type(config).__name__ != "ConfigParser" or "k8s" not in config.sections():
+        if not isinstance(config, configparser.ConfigParser) or "k8s" not in config.sections():
             raise ValueError("config must be a ConfigParser object with a 'k8s' section")
 
         self.node = node
@@ -60,15 +63,16 @@ class NodeInstallation:
             "DEBIAN_FRONTEND=noninteractive apt install -y apt-transport-https ca-certificates "
             "curl software-properties-common git vim ipvsadm iptables gnupg"
         )
+        k8s_apt_version = self.config["k8s"].get("k8s_apt_version", "v1.28")
         self.node.execute_command("mkdir -p /etc/apt/keyrings")
         self.node.execute_command(
-            "curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key "
+            f"curl -fsSL https://pkgs.k8s.io/core:/stable:/{k8s_apt_version}/deb/Release.key "
             "| gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg"
         )
         self.node.execute_command(
-            'echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] '
-            'https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /" '
-            '| tee /etc/apt/sources.list.d/kubernetes.list'
+            f'echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] '
+            f'https://pkgs.k8s.io/core:/stable:/{k8s_apt_version}/deb/ /" '
+            f'| tee /etc/apt/sources.list.d/kubernetes.list'
         )
         self.node.execute_command("DEBIAN_FRONTEND=noninteractive apt update")
 
