@@ -152,8 +152,7 @@ spec:
           hostPath:
             path: /sys
 """
-        with open("/tmp/checkmk-agent.yaml", "w") as f:
-            f.write(checkmk_manifest)
+        self.node.write_remote_file("/tmp/checkmk-agent.yaml", checkmk_manifest)
         self.node.execute_command("kubectl apply -f /tmp/checkmk-agent.yaml")
         self.node.execute_command("rm -f /tmp/checkmk-agent.yaml")
 

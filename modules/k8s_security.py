@@ -139,8 +139,7 @@ spec:
           hostPath:
             path: /etc
 """
-        with open("/tmp/falco.yaml", "w") as f:
-            f.write(falco_manifest)
+        self.node.write_remote_file("/tmp/falco.yaml", falco_manifest)
         self.node.execute_command("kubectl apply -f /tmp/falco.yaml")
         self.node.execute_command("rm -f /tmp/falco.yaml")
 

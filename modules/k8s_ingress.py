@@ -157,8 +157,7 @@ spec:
       port: 8080
       targetPort: dashboard
 """
-        with open("/tmp/traefik-deployment.yaml", "w") as f:
-            f.write(traefik_manifest)
+        self.node.write_remote_file("/tmp/traefik-deployment.yaml", traefik_manifest)
         self.node.execute_command("kubectl apply -f /tmp/traefik-deployment.yaml")
         self.node.execute_command("rm -f /tmp/traefik-deployment.yaml")
 

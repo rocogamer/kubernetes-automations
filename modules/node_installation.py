@@ -23,8 +23,10 @@ class NodeInstallation:
         # Load kernel modules
         self.node.execute_command("modprobe overlay")
         self.node.execute_command("modprobe br_netfilter")
-        with open("/etc/modules-load.d/containerd.conf", "w") as f:
-            f.write("overlay\nbr_netfilter\n")
+        self.node.write_remote_file(
+            "/etc/modules-load.d/containerd.conf",
+            "overlay\nbr_netfilter\n",
+        )
 
         # Install containerd
         self.node.execute_command("DEBIAN_FRONTEND=noninteractive apt update")
@@ -38,10 +40,12 @@ class NodeInstallation:
         self.node.execute_command("systemctl enable containerd")
 
         # Kernel parameters for Kubernetes
-        with open("/etc/sysctl.d/99-kubernetes-cri.conf", "w") as f:
-            f.write("net.bridge.bridge-nf-call-iptables = 1\n")
-            f.write("net.ipv4.ip_forward = 1\n")
-            f.write("net.bridge.bridge-nf-call-ip6tables = 1\n")
+        self.node.write_remote_file(
+            "/etc/sysctl.d/99-kubernetes-cri.conf",
+            "net.bridge.bridge-nf-call-iptables = 1\n"
+            "net.ipv4.ip_forward = 1\n"
+            "net.bridge.bridge-nf-call-ip6tables = 1\n",
+        )
         self.node.execute_command("sysctl --system")
 
         # Inotify and conntrack tuning
@@ -165,32 +169,35 @@ class NodeInstallation:
             backup_script += f'mv "/tmp/$BACKUP_NAME.tar.gz" {local_dir}/\n'
             backup_script += f'find {local_dir} -type f -name "*.tar.gz" -mtime +7 -exec rm {{}} \\;\n'
 
-        with open("/etc/scripts/Seguridad/backup.sh", "w") as f:
-            f.write(backup_script)
+        self.node.write_remote_file("/etc/scripts/Seguridad/backup.sh", backup_script)
         self.node.execute_command("chmod +x /etc/scripts/Seguridad/backup.sh")
 
         # Create systemd service
-        with open("/etc/systemd/system/backup.service", "w") as f:
-            f.write("[Unit]\n")
-            f.write("Description=Kubernetes etcd backup service\n")
-            f.write("After=network.target\n\n")
-            f.write("[Service]\n")
-            f.write("Type=oneshot\n")
-            f.write("User=root\n")
-            f.write("ExecStart=/etc/scripts/Seguridad/backup.sh\n\n")
-            f.write("[Install]\n")
-            f.write("WantedBy=multi-user.target\n")
+        self.node.write_remote_file(
+            "/etc/systemd/system/backup.service",
+            "[Unit]\n"
+            "Description=Kubernetes etcd backup service\n"
+            "After=network.target\n\n"
+            "[Service]\n"
+            "Type=oneshot\n"
+            "User=root\n"
+            "ExecStart=/etc/scripts/Seguridad/backup.sh\n\n"
+            "[Install]\n"
+            "WantedBy=multi-user.target\n",
+        )
 
         # Create systemd timer
-        with open("/etc/systemd/system/backup.timer", "w") as f:
-            f.write("[Unit]\n")
-            f.write("Description=Kubernetes etcd backup timer\n\n")
-            f.write("[Timer]\n")
-            f.write("OnCalendar=*-*-* 00:00:00\n")
-            f.write("Persistent=true\n")
-            f.write("Unit=backup.service\n\n")
-            f.write("[Install]\n")
-            f.write("WantedBy=timers.target\n")
+        self.node.write_remote_file(
+            "/etc/systemd/system/backup.timer",
+            "[Unit]\n"
+            "Description=Kubernetes etcd backup timer\n\n"
+            "[Timer]\n"
+            "OnCalendar=*-*-* 00:00:00\n"
+            "Persistent=true\n"
+            "Unit=backup.service\n\n"
+            "[Install]\n"
+            "WantedBy=timers.target\n",
+        )
 
         self.node.execute_command("systemctl daemon-reload")
         self.node.execute_command("systemctl enable backup.timer")
@@ -218,8 +225,7 @@ class NodeInstallation:
         )
         restore_script += 'rm -rf "/tmp/$BACKUP_NAME"\n'
 
-        with open("/etc/scripts/Seguridad/restore.sh", "w") as f:
-            f.write(restore_script)
+        self.node.write_remote_file("/etc/scripts/Seguridad/restore.sh", restore_script)
         self.node.execute_command("chmod +x /etc/scripts/Seguridad/restore.sh")
 
         logger.info("etcd backup system configured successfully")
