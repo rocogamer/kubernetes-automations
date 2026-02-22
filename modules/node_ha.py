@@ -91,20 +91,19 @@ vrrp_instance VI_1 {{
 }}
 """
         self.node.execute_command("mkdir -p /etc/keepalived")
-        with open("/etc/keepalived/keepalived.conf", "w") as f:
-            f.write(keepalived_conf)
+        self.node.write_remote_file("/etc/keepalived/keepalived.conf", keepalived_conf)
 
         # Create health check script
-        check_script = """#!/bin/bash
-errorExit() {
-    echo "*** $*" 1>&2
-    exit 1
-}
-
-curl --silent --max-time 2 --insecure https://localhost:6443/healthz -o /dev/null || errorExit "Error GET https://localhost:6443/healthz"
-"""
-        with open("/etc/keepalived/check_apiserver.sh", "w") as f:
-            f.write(check_script)
+        check_script = (
+            "#!/bin/bash\n"
+            "errorExit() {\n"
+            '    echo "*** $*" 1>&2\n'
+            "    exit 1\n"
+            "}\n\n"
+            "curl --silent --max-time 2 --insecure https://localhost:6443/healthz "
+            '-o /dev/null || errorExit "Error GET https://localhost:6443/healthz"\n'
+        )
+        self.node.write_remote_file("/etc/keepalived/check_apiserver.sh", check_script)
         self.node.execute_command("chmod +x /etc/keepalived/check_apiserver.sh")
 
         self.node.execute_command("systemctl enable keepalived")
@@ -142,8 +141,7 @@ listen stats
     stats uri /
     stats realm HAProxy\\ Statistics
 """
-        with open("/etc/haproxy/haproxy-k8s.cfg", "w") as f:
-            f.write(haproxy_conf)
+        self.node.write_remote_file("/etc/haproxy/haproxy-k8s.cfg", haproxy_conf)
 
         # Include in main HAProxy config
         self.node.execute_command(
